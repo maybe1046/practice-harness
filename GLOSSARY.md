@@ -69,7 +69,7 @@ A market's fair price, computed by this exchange from the oracle price and its o
 _Avoid_: Fair price, last price, markPx
 
 **Tick**:
-A market's smallest price increment; every price is a whole number of ticks.
+A market's fixed smallest price increment; every price is a whole number of ticks. Unlike the reference exchange's significant-figure rule, it does not change with the price.
 _Avoid_: Price step, pip
 
 **Lot**:
