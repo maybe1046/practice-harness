@@ -48,6 +48,10 @@ _Avoid_: Risk engine, ledger
 An account's simulated collateral, denominated in paper USDC; it has no real-world value.
 _Avoid_: Funds, deposit, wallet, paper USDC (that is its unit, not the term)
 
+**Account value**:
+An account's paper balance plus the unrealized profit and loss of all its open positions, valued at mark price.
+_Avoid_: Equity, net worth, margin balance
+
 **Leverage**:
 The multiple an account chooses per market, up to that market's maximum, that sets the initial margin a position requires.
 _Avoid_: Multiplier, gearing
