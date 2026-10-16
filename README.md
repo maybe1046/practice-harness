@@ -25,4 +25,7 @@ No code yet. Work follows the [roadmap issue (#3)](https://github.com/maybe1046/
 | [`GLOSSARY.md`](GLOSSARY.md) | The project's vocabulary: one definition per term |
 | [`docs/domain/`](docs/domain/) | How the exchange's mechanics work, with worked examples; start with the [perpetual-futures primer](docs/domain/perpetual-futures-primer.md) |
 | [`docs/adr/`](docs/adr/) | Decisions that are hard to reverse, and why they were made |
+| [`docs/design-docs/harness-experiment.md`](docs/design-docs/harness-experiment.md) | The experiment's rules, measures, gap routine and how work flows |
+| [`docs/design-docs/exchange-design.md`](docs/design-docs/exchange-design.md) | Product and architecture decisions, with reasons and rejected options |
+| [`docs/references/harness-engineering-article.md`](docs/references/harness-engineering-article.md) | Summary of the OpenAI article the project is based on |
 | [`AGENTS.md`](AGENTS.md) | Instructions for the agent: issue tracker, triage labels, domain docs |
