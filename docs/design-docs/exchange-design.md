@@ -15,16 +15,19 @@ The product and architecture decisions for the paper-money perpetual-futures exc
 - **Order types in v1:** GTC, IOC, ALO (post-only), and market orders, which are IOC orders with a slippage cap. **Reduce-only** arrives with Liquidation in week 2, since liquidation needs reduce-style closing anyway. **TP/SL** trigger orders are deferred: they need a separate trigger engine watching mark price.
 - **Margin:** cross margin only. Copy the reference exchange's rules with **one tier per market**: initial margin is notional divided by the account's chosen leverage for that market, and maintenance margin is half the initial margin at the market's maximum leverage (1.25% for BTC, 2% for ETH). Tiered margin tables only matter for positions far larger than any paper account will hold. Isolated margin is deferred.
 - **Mark price is computed locally**, roughly the way Hyperliquid does it (a median of: the oracle price plus a moving average of the book's premium, the median of best bid, best ask and last trade, and an external reference, for which we use Hyperliquid's own mid price). Rejected: copying Hyperliquid's `markPx`, because our order book could trade far from it and liquidations would fire on prices our users never saw. Also rejected: mark price equal to oracle price, because then our order book never affects profit, loss or liquidations.
-- **Fees:** none in v1, so the conservation invariant stays "paper balance in = Deposits − Withdrawals". In week 3, fees (base tier ≈ 0.045% taker, 0.015% maker) are paid into an exchange-owned fee account, which keeps conservation intact if the fee account is included. Fees that simply vanish were rejected because they would break conservation.
+- **Conservation:** the paper balance of all accounts, the Exchange account included, always equals Deposits − Withdrawals. Money is whole micro-USDC and every rounding favours the exchange, with the leftover credited to the Exchange account, so this holds exactly ([ADR-0004](../adr/0004-money-in-micro-usdc-rounded-toward-the-exchange.md)).
+- **Fees:** none in v1. In week 3, fees (base tier ≈ 0.045% taker, 0.015% maker) are paid into the Exchange account, which keeps conservation intact. Fees that simply vanish were rejected because they would break conservation.
 - **Accounts:** no login in v1; the human picks an account ID locally. Every new account gets a 100,000 paper USDC Deposit. Bots are accounts too. Simple login (e.g. GitHub sign-in or magic links) arrives in week 3, before friends join. "Paper balance" stays the term; paper USDC is its unit.
 
 ## Architecture
 
 - **Prices and sizes:** whole numbers of ticks and lots as `bigint`, never floating point. See [ADR-0002](../adr/0002-integer-ticks-and-lots.md).
+- **Money:** every amount of money is a whole number of micro-USDC as `bigint`, each market's tick × lot is a whole number of micro-USDC, and rates and ratios are fixed-point `bigint`. See [ADR-0004](../adr/0004-money-in-micro-usdc-rounded-toward-the-exchange.md).
 - **State:** a deterministic in-memory engine fed by an append-only event log, with read models projected into SQLite. See [ADR-0003](../adr/0003-deterministic-engine-with-event-log.md).
 - **Stack:** TypeScript everywhere, in strict mode, with Vitest. One language means every harness capability (lints, structural tests, replay tools) is built once and applies everywhere. Rejected: a Rust matching engine (two toolchains, and performance is irrelevant at paper scale) and a Python backend (two languages, weaker types for layering rules). The testnet contracts will be Solidity whatever the stack.
 - **Repo layout:** a pnpm workspace with three packages. The exchange app holds the engine, Clearinghouse, API, Oracle feed and Bots. The web app is the trading UI (React + Vite). The protocol package holds the API's request and response shapes as Zod schemas, shared by server and UI and parsed at the boundary. Rejected: one package per domain, because dependency rules then become cross-package rules, which are harder to enforce. Three packages is not a real monorepo, so the glossary stays single-context.
 - **Domains** inside the exchange app: Markets, Oracle, Order book, Pricing, Clearinghouse, Funding, Liquidation and Bots.
+- **Bots are API clients.** They talk to the exchange only through the protocol package's API, exactly as the trading UI does, so their orders enter the event log as ordinary events and their randomness and timers never reach the deterministic engine. They import no other domain. Rejected: Bots calling Services directly, which would bring randomness into the engine and leave the API untested by the bots' constant traffic.
 - **Layers:** every domain uses the fixed layers Types → Config → Repo → Service → Runtime → UI, and may only depend forward along that chain. With the event-log design, "Repo" means reading and writing the event log and read models.
 - **Providers:** cross-cutting concerns (logging, the clock, randomness, the reference-exchange connection) enter only through the Providers interface.
 - **Determinism rule:** Service-layer code never reads the wall clock, generates randomness, uses timers or touches the network or files. Time and randomness arrive as events. A lint enforces this, because replay depends on it.
@@ -46,7 +49,7 @@ Deferred until a gap asks: the article's per-worktree Loki/Prometheus stack and 
 In order of weight:
 
 1. **Unit tests** for each Service.
-2. **Property-based tests** (`fast-check`) for rules that must always hold: the order book never crosses, paper balance is conserved, and funding sums to zero across accounts.
+2. **Property-based tests** (`fast-check`) for rules that must always hold: the order book never crosses, paper balance is conserved, and funding sums to zero across accounts, the Exchange account included.
 3. **Replay tests:** a saved event log goes in and the expected state comes out. A failing property's input becomes a replay test.
 4. **End-to-end tests** (Playwright) for only 2–3 key UI flows.
 
@@ -57,5 +60,5 @@ The harness itself is tested through one seam: the repo-wide check command. Fixt
 - Where the exchange is hosted when friends join (decide in week 3).
 - Which testnet chain and contract design (decide in week 4).
 - Bot strategies: spreads, sizes, taker frequency (decide in the bot tickets' specs, #12 and #15).
-- Who covers a liquidation that leaves negative account value (bad debt): for example an exchange-owned backstop account, as Hyperliquid's liquidator vault does, or auto-deleveraging profitable positions. Decide in the Liquidation spec (#14); it affects the conservation invariant.
+- Who covers a liquidation that leaves negative account value (bad debt): for example the Exchange account acting as a backstop, as Hyperliquid's liquidator vault does, or auto-deleveraging profitable positions. Decide in the Liquidation spec (#14); it affects the conservation invariant.
 - Isolated margin, TP/SL orders and more markets (not scheduled).
