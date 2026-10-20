@@ -48,7 +48,7 @@ Issue #1 writes this routine into `AGENTS.md`.
 - **Issues and ExecPlans.** A GitHub issue says *what* and *why*, with acceptance criteria. An ExecPlan says *how*, and is used only for work spanning several PRs. Issue #1 defines the ExecPlan format in `docs/PLANS.md`, adopted from OpenAI's ExecPlan guide. ExecPlans live in `docs/exec-plans/active/` and move to `completed/` when their issue closes.
 - **Roadmap.** [Issue #3](https://github.com/maybe1046/practice-harness/issues/3) is the roadmap, labelled `wayfinder:map`. Its sub-issues are the tickets (`wayfinder:task`), and GitHub "blocked by" links set the order. **Next ticket** = the first open, unassigned sub-issue of #3 with no open blockers. Week 3–4 tickets are created at the end of week 2.
 - **Ticket lifecycle.** Only issue #1 has a full spec so far. Every other ticket needs `/to-spec` first, which publishes a spec and labels it `ready-for-agent`. Then `/implement #N` builds it. Specs name test seams; the default is the highest single seam available.
-- **Every change goes through a PR.** A local pre-commit hook blocks direct commits to `main`; branch protection on GitHub arrives with issue #1. A change reaches `main` only through a PR with a passing check.
+- **Every change goes through a PR.** Issue #1 adds a pre-commit hook kept in the repo (`.githooks/`, switched on by a pnpm `prepare` script) that blocks direct commits to `main`, and branch protection on GitHub. A change reaches `main` only through a PR with a passing check.
 - **Who merges.** In weeks 1–2 the human reviews and merges. From week 3, the agent squash-merges its own PRs once checks are green, and the human spot-checks afterwards. The agent reviews its own PR with the `code-review` skill before asking for a merge.
 - **Merge style.** PRs are squash-merged. Merged branches can be deleted on GitHub (`git push origin --delete <branch>`). Locally, `git branch -d` reports squash-merged branches as "not fully merged" even when their content is identical to `main`.
 - **Commit attribution.** Agent commits end with a `Co-Authored-By: Claude …` line, and agent PR descriptions end with the Claude Code attribution line.
@@ -63,9 +63,9 @@ The [wiki](https://github.com/maybe1046/practice-harness/wiki) mirrors `GLOSSARY
 
 ## Environment notes
 
-- The human develops on **Windows 10**; CI will run on Linux. Anything in the check path (scripts, hooks) must be cross-platform.
+- The human develops on **Linux, WSL or macOS**; CI runs on Linux. Anything in the check path (scripts, hooks) is written as Node scripts, never shell-specific or GNU-only commands, so it behaves the same on all of them.
 - The repo is **public**. No secrets go into the repo or into workflow files.
-- `gh` is logged in as the repo owner with `repo` and `workflow` scopes. Labels in use: the five triage labels, `harness-gap`, `wayfinder:map` and `wayfinder:task`.
+- `gh` is logged in as the repo owner (`maybe1046`). On the WSL machine it is installed from the official release binary into `~/.local/bin`, because `sudo` needs a password there. Pushing changes to `.github/workflows/` needs the `workflow` scope (`gh auth refresh -s workflow`). Labels in use: the five triage labels, `harness-gap`, `wayfinder:map` and `wayfinder:task`.
 - Hyperliquid's public `info` endpoint needs no authentication. A POST with `{"type":"metaAndAssetCtxs"}` returns every perp market's `szDecimals`, `maxLeverage`, `oraclePx`, `markPx` and `funding`.
 
 ## Suggested skills for a new session

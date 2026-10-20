@@ -92,6 +92,10 @@ _Avoid_: Top-up, mint, credit
 The only way paper balance leaves the clearinghouse.
 _Avoid_: Cash-out, burn, debit
 
+**Exchange account**:
+The single account owned by the exchange itself; it collects every rounding leftover and, once fees exist, every fee, and it counts toward conservation like any other account.
+_Avoid_: House account, fee account, treasury
+
 **Funding**:
 A periodic payment between longs and shorts that pulls a market's price toward its oracle price.
 _Avoid_: Funding fee, interest
